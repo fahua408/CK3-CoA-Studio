@@ -61,6 +61,7 @@ from src.ui.image_editor import SquareImageEditorDialog
 from src.ui.preview_widget import CoaPreviewWidget
 from src.ui.screenshot_overlay import ScreenshotOverlay
 from src.ui.settings_dialog import SettingsDialog
+from src.ui.tutorial_dialog import TutorialDialog
 
 
 def qimage_to_pil(qimg: QImage) -> Image.Image:
@@ -138,18 +139,19 @@ class MainWindow(QMainWindow):
         topbar = QFrame(self)
         topbar.setObjectName("TopBar")
         tb_l = QHBoxLayout(topbar)
-        tb_l.setContentsMargins(14, 10, 14, 10)
-        tb_l.setSpacing(10)
+        tb_l.setContentsMargins(12, 9, 12, 9)
+        tb_l.setSpacing(7)
 
         brand = QLabel(f"🛡 {APP_TITLE}")
-        brand.setStyleSheet("font-size: 16px; font-weight: 800; color: #E6C775;")
+        brand.setStyleSheet("font-size: 15px; font-weight: 800; color: #E6C775;")
+        brand.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
         tb_l.addWidget(brand)
 
         self._ws_label = QLabel()
-        self._ws_label.setMaximumWidth(210)
+        self._ws_label.setMaximumWidth(175)
         self._ws_label.setStyleSheet(
             "background: #101318; border: 1px solid #282E3A; border-radius: 7px; "
-            "padding: 5px 10px; color: #B6BFC9;"
+            "padding: 5px 8px; color: #B6BFC9;"
         )
         tb_l.addWidget(self._ws_label)
 
@@ -162,8 +164,8 @@ class MainWindow(QMainWindow):
         tb_l.addWidget(refresh_btn)
 
         self._search_edit = QLineEdit()
-        self._search_edit.setPlaceholderText("🔍 搜索图片或 TXT 文件名...")
-        self._search_edit.setMinimumWidth(200)
+        self._search_edit.setPlaceholderText("🔍 搜索图片或 TXT...")
+        self._search_edit.setMinimumWidth(130)
         self._search_edit.setClearButtonEnabled(True)
         self._search_edit.textChanged.connect(self._apply_filter_and_render)
         tb_l.addWidget(self._search_edit, 1)
@@ -181,6 +183,15 @@ class MainWindow(QMainWindow):
         self._batch_btn = QPushButton("⚡ 批量转换待生成项")
         self._batch_btn.clicked.connect(self._start_batch_convert)
         tb_l.addWidget(self._batch_btn)
+
+        tutorial_btn = QPushButton("📖 新手教程")
+        tutorial_btn.setToolTip("3 步把图片（如卡皮巴拉）放进 CK3 变成纹章的实机图文教程")
+        tutorial_btn.setStyleSheet(
+            "QPushButton { background: #262117; border: 1px solid #8A6D24; color: #F3DA91; font-weight: 700; }"
+            "QPushButton:hover { background: #332C1D; border-color: #D9B45A; }"
+        )
+        tutorial_btn.clicked.connect(self.open_tutorial)
+        tb_l.addWidget(tutorial_btn)
 
         settings_btn = QPushButton("⚙ 设置")
         settings_btn.clicked.connect(self._open_settings)
@@ -367,7 +378,8 @@ class MainWindow(QMainWindow):
         self._limit_spin.valueChanged.connect(self._update_cli_preview)
         opt_row.addWidget(self._limit_spin)
 
-        self._title_chk = QCheckBox("领地头衔 (-t)")
+        self._title_chk = QCheckBox("领地旗帜 (-t)")
+        self._title_chk.setToolTip("改家族/宗族纹章请勿勾选；改伯爵领/公国/王国/帝国旗帜必须勾选后重新生成！")
         self._title_chk.setChecked(self._config.default_landed_title)
         self._title_chk.toggled.connect(self._update_cli_preview)
         opt_row.addWidget(self._title_chk)
@@ -410,6 +422,21 @@ class MainWindow(QMainWindow):
         self._copy_txt_btn.setObjectName("CopyBtn")
         self._copy_txt_btn.clicked.connect(self._copy_selected_txt)
         tx_l.addWidget(self._copy_txt_btn)
+
+        tip_row = QHBoxLayout()
+        tip_row.setSpacing(6)
+        tip_lbl = QLabel("👉 复制后：进 CK3 纹章界面右下角点「从剪贴板粘贴」(等1~3秒即成)")
+        tip_lbl.setStyleSheet("color: #6EE7B7; font-size: 11.5px; font-weight: 600;")
+        tip_btn = QPushButton("📖 看红箭头图解")
+        tip_btn.setStyleSheet(
+            "QPushButton { padding: 2px 8px; font-size: 11px; color: #F3DA91; "
+            "background: #262117; border: 1px solid #6E5826; border-radius: 5px; }"
+            "QPushButton:hover { background: #332C1D; border-color: #D9B45A; }"
+        )
+        tip_btn.clicked.connect(self.open_tutorial)
+        tip_row.addWidget(tip_lbl, 1)
+        tip_row.addWidget(tip_btn)
+        tx_l.addLayout(tip_row)
 
         self._txt_meta_lbl = QLabel("—")
         self._txt_meta_lbl.setObjectName("MutedLabel")
@@ -863,10 +890,10 @@ class MainWindow(QMainWindow):
         try:
             content = read_txt_full(txt_path)
             QGuiApplication.clipboard().setText(content)
-            self._copy_txt_btn.setText(f"✓ 已复制 {txt_path.name}！可直接去 CK3 粘贴")
+            self._copy_txt_btn.setText(f"✓ 已复制 {txt_path.name}！现在去 CK3 右下角点「从剪贴板粘贴」")
             self._status.showMessage(
-                f"✓ 已复制 {txt_path.name} 全文（{line_count:,} 行）到系统剪贴板！",
-                6000,
+                f"✓ 已复制 {txt_path.name}（{line_count:,} 行）！请进入 CK3 纹章界面右下角点击「从剪贴板粘贴」（等待 1~3 秒加载）。",
+                8000,
             )
             QTimer.singleShot(
                 2200,
@@ -1110,3 +1137,14 @@ class MainWindow(QMainWindow):
             self._limit_spin.setValue(self._config.default_color_limit)
             self._title_chk.setChecked(self._config.default_landed_title)
             self.reload_workspace()
+
+    def open_tutorial(self) -> None:
+        dlg = TutorialDialog(self._config, self)
+        dlg.exec()
+
+    def open_tutorial_first_launch(self) -> None:
+        if self._config.show_tutorial_on_startup:
+            self._config.show_tutorial_on_startup = False
+            self._config.save()
+            dlg = TutorialDialog(self._config, self)
+            dlg.exec()

@@ -39,6 +39,10 @@ def main() -> int:
     config = AppConfig.load()
     window = MainWindow(config)
     window.show()
+    if config.show_tutorial_on_startup:
+        from PySide6.QtCore import QTimer
+
+        QTimer.singleShot(300, window.open_tutorial_first_launch)
     return app.exec()
 
 

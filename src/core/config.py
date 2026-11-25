@@ -39,35 +39,38 @@ def get_config_file() -> Path:
 
 
 def discover_converter(workspace_dir: Optional[str] = None) -> str:
-    """Locate coaConverter_windows.exe automatically from common locations."""
+    """Locate coaConverter_windows.exe automatically from workspace and parent folders."""
     candidates: list[Path] = []
     if workspace_dir:
-        candidates.append(Path(workspace_dir) / "coaConverter_windows.exe")
+        ws_path = Path(workspace_dir)
+        candidates.append(ws_path / "coaConverter_windows.exe")
+        candidates.append(ws_path.parent / "coaConverter_windows.exe")
 
     app_root = get_app_root()
-    candidates.extend(
-        [
-            app_root / "coaConverter_windows.exe",
-            app_root.parent / "coaConverter_windows.exe",
-            Path(r"E:\wenzhang\coaConverter_windows.exe"),
-        ]
-    )
+    for folder in (app_root, *app_root.parents):
+        candidates.append(folder / "coaConverter_windows.exe")
 
     for candidate in candidates:
-        if candidate.is_file():
-            return str(candidate)
+        try:
+            if candidate.is_file():
+                return str(candidate)
+        except OSError:
+            continue
 
     in_path = shutil.which("coaConverter_windows.exe")
     return in_path or ""
 
 
 def discover_default_workspace() -> str:
-    """Pick a sensible initial workspace folder."""
+    """Pick a sensible initial workspace folder where coaConverter_windows.exe resides."""
     app_root = get_app_root()
-    if (app_root.parent / "coaConverter_windows.exe").is_file():
-        return str(app_root.parent)
-    if Path(r"E:\wenzhang").is_dir():
-        return r"E:\wenzhang"
+    for folder in (app_root, *app_root.parents):
+        try:
+            if (folder / "coaConverter_windows.exe").is_file():
+                return str(folder)
+        except OSError:
+            continue
+
     pictures = Path.home() / "Pictures"
     if pictures.is_dir():
         return str(pictures)
@@ -87,6 +90,7 @@ class AppConfig:
     screenshot_open_editor: bool = True
     editor_auto_convert: bool = True
     screenshot_hotkey: str = "Ctrl+Shift+A"
+    show_tutorial_on_startup: bool = True
 
     @classmethod
     def load(cls) -> "AppConfig":

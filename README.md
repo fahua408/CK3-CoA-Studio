@@ -61,6 +61,10 @@
 支持自由裁切 1:1，或者不裁切直接自动取边缘色填充为 1:1 正方形，还支持锐化与对比度增强，让纹章进游戏更清晰：
 ![CK3 CoA Studio 1:1 Editor](docs/editor_preview.png)
 
+### 软件内置「新手保姆级 3 步图文教程」（首次打开自动弹出，随时可查）
+软件内部自带离线实机图文指引（顶部点击「📖 新手教程」或复制按钮下方的「📖 看红箭头图解」即可弹出），彻底解决新手不会用的问题：
+![CK3 CoA Studio Built-in Tutorial](docs/tutorial_preview.png)
+
 ---
 
 ## ✨ 核心特性
@@ -120,6 +124,9 @@ powershell -ExecutionPolicy Bypass -File packaging/build_release.ps1
 
 ---
 
-## 开源协议
+## 开源协议与免责致谢 (License, Credits & Disclaimer)
 
-本项目基于 [MIT License](LICENSE) 开源，仅供个人学习、游戏辅助与合法合规的创意用途。
+- **开源协议**：本项目源码基于 [MIT License](LICENSE) 开源，免费提供给玩家与 Mod 创作者学习与个人非商业辅助使用。
+- **第三方转换器致谢**：纹章底层命令行转换由第三方开源工具 `coaConverter` (`coaConverter_windows.exe`, Author: **Perondas**) 提供。本仓库仅提供图形化管理、1:1 截图与图片编辑前端，**不打包、不分发** `coaConverter_windows.exe` 二进制本体，请用户自行获取并配置。
+- **游戏商标与版权声明**：《十字军之王 III》(Crusader Kings III) 及其游戏内界面、徽章框架与相关商标版权均归 **Paradox Interactive AB** 所有。本项目为玩家自制的非官方辅助工具，与 Paradox Interactive 无任何隶属、合作或官方授权关系。
+- **素材合规提示**：本工具所有图片裁切与文本转换均在用户本地电脑离线完成，请确保所转换的图片素材符合所在地法律法规与社区规范。
