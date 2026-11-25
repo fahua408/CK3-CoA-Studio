@@ -57,6 +57,7 @@ from src.core.workspace import (
     scan_workspace,
 )
 from src.ui.coa_card import CoaCardWidget
+from src.ui.composer_dialog import HeraldicComposerDialog
 from src.ui.image_editor import SquareImageEditorDialog
 from src.ui.preview_widget import CoaPreviewWidget
 from src.ui.screenshot_overlay import ScreenshotOverlay
@@ -144,11 +145,11 @@ class MainWindow(QMainWindow):
 
         brand = QLabel(f"🛡 {APP_TITLE}")
         brand.setStyleSheet("font-size: 15px; font-weight: 800; color: #E6C775;")
-        brand.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
+        brand.setMinimumWidth(198)
         tb_l.addWidget(brand)
 
         self._ws_label = QLabel()
-        self._ws_label.setMaximumWidth(175)
+        self._ws_label.setMaximumWidth(155)
         self._ws_label.setStyleSheet(
             "background: #101318; border: 1px solid #282E3A; border-radius: 7px; "
             "padding: 5px 8px; color: #B6BFC9;"
@@ -164,8 +165,8 @@ class MainWindow(QMainWindow):
         tb_l.addWidget(refresh_btn)
 
         self._search_edit = QLineEdit()
-        self._search_edit.setPlaceholderText("🔍 搜索图片或 TXT...")
-        self._search_edit.setMinimumWidth(130)
+        self._search_edit.setPlaceholderText("🔍 搜索...")
+        self._search_edit.setMinimumWidth(110)
         self._search_edit.setClearButtonEnabled(True)
         self._search_edit.textChanged.connect(self._apply_filter_and_render)
         tb_l.addWidget(self._search_edit, 1)
@@ -176,11 +177,21 @@ class MainWindow(QMainWindow):
         shot_btn.clicked.connect(self.start_screenshot)
         tb_l.addWidget(shot_btn)
 
+        compose_btn = QPushButton("🧩 多纹章拼接")
+        compose_btn.setToolTip("将多个纹章拼接为西班牙六合一、汉诺威三分、帝国九区、四分+中央小盾等复合纹章")
+        compose_btn.setStyleSheet(
+            "QPushButton { background: #19322A; border: 1px solid #2D6A54; color: #A7F3D0; font-weight: 700; }"
+            "QPushButton:hover { background: #214539; border-color: #3E8E72; }"
+        )
+        compose_btn.clicked.connect(self.open_composer)
+        tb_l.addWidget(compose_btn)
+
         import_btn = QPushButton("🖼 导入图片")
         import_btn.clicked.connect(self._import_images)
         tb_l.addWidget(import_btn)
 
-        self._batch_btn = QPushButton("⚡ 批量转换待生成项")
+        self._batch_btn = QPushButton("⚡ 批量转换")
+        self._batch_btn.setToolTip("一键批量将所有尚未生成 TXT 的图片转换为纹章代码")
         self._batch_btn.clicked.connect(self._start_batch_convert)
         tb_l.addWidget(self._batch_btn)
 
@@ -1141,6 +1152,27 @@ class MainWindow(QMainWindow):
     def open_tutorial(self) -> None:
         dlg = TutorialDialog(self._config, self)
         dlg.exec()
+
+    def open_composer(self) -> None:
+        dlg = HeraldicComposerDialog(
+            workspace_dir=Path(self._config.workspace_dir),
+            entries=self._entries,
+            default_auto_convert=self._config.editor_auto_convert,
+            parent=self,
+        )
+        if dlg.exec() == HeraldicComposerDialog.DialogCode.Accepted and dlg.saved_image_path:
+            saved = dlg.saved_image_path
+            self.reload_workspace(preserve_id=str(saved))
+            if dlg.saved_txt_path:
+                self._status.showMessage(
+                    f"✓ 已完成多纹章拼接与 TXT 坐标直拼: {saved.name} ↔ {dlg.saved_txt_path.name}"
+                )
+            else:
+                self._status.showMessage(f"✓ 已保存联合拼接纹章: {saved.name}")
+                if dlg.should_auto_convert:
+                    entry = self._find_entry(str(saved))
+                    if entry:
+                        self._run_convert_entry(entry)
 
     def open_tutorial_first_launch(self) -> None:
         if self._config.show_tutorial_on_startup:

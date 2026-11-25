@@ -13,6 +13,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.core.composer import (
+    HERALDIC_TEMPLATES,
+    CompositeStyle,
+    SlotImageState,
+    merge_coa_txt_scripts,
+    render_heraldic_composite,
+)
 from src.core.converter import ConvertParams
 from src.core.image_ops import SquareEditSpec, apply_square_edit, save_square_image
 from src.core.workspace import inspect_txt_file, rename_entry, scan_workspace
@@ -111,6 +118,39 @@ class TestCore(unittest.TestCase):
                 "-t",
             ],
         )
+
+    def test_heraldic_composite_templates_and_txt_merger(self) -> None:
+        sample_img = Image.new("RGBA", (128, 128), (220, 60, 60, 255))
+        for tpl in HERALDIC_TEMPLATES:
+            states = {s.slot_id: SlotImageState(pil_image=sample_img) for s in tpl.slots}
+            out = render_heraldic_composite(
+                tpl,
+                states,
+                CompositeStyle(outer_shield_frame=True),
+                output_size=256,
+            )
+            self.assertEqual(out.size, (256, 256))
+
+        script_a = (
+            'coa_rd_dynasty_1={\n'
+            '\tcolored_emblem={\n'
+            '\t\ttexture="ce_block_02.dds"\n'
+            '\t\tinstance={\n'
+            '\t\t\tposition={ 0.500000 0.500000 }\n'
+            '\t\t\tscale={ 0.200000 0.200000 }\n'
+            '\t\t}\n'
+            '\t}\n'
+            '}\n'
+        )
+        merged = merge_coa_txt_scripts(
+            [
+                (script_a, (0.0, 0.0, 0.5, 0.5)),
+                (script_a, (0.5, 0.5, 1.0, 1.0)),
+            ]
+        )
+        self.assertIn("position={ 0.250000 0.250000 }", merged)
+        self.assertIn("position={ 0.750000 0.750000 }", merged)
+        self.assertIn("scale={ 0.100000 0.100000 }", merged)
 
 
 if __name__ == "__main__":
