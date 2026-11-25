@@ -266,7 +266,7 @@ class HeraldicComposerDialog(QDialog):
         self.saved_txt_path: Optional[Path] = None
         self.should_auto_convert: bool = False
 
-        self._overlay = ScreenshotOverlay()
+        self._overlay = ScreenshotOverlay(self)
         self._overlay.captured.connect(self._on_slot_screenshot_captured)
         self._overlay.cancelled.connect(self._on_slot_screenshot_cancelled)
 
@@ -616,22 +616,30 @@ class HeraldicComposerDialog(QDialog):
             self._refresh_canvas()
 
     def _screenshot_for_slot(self) -> None:
-        self.hide()
+        parent_win = self.parentWidget()
+        if parent_win is not None:
+            parent_win.setWindowOpacity(0.0)
+        self.setWindowOpacity(0.0)
         from PySide6.QtCore import QTimer
         from PySide6.QtWidgets import QApplication
 
         QApplication.processEvents()
-        QTimer.singleShot(250, self._overlay.begin_capture)
+        QTimer.singleShot(220, self._overlay.begin_capture)
+
+    def _restore_windows_after_shot(self) -> None:
+        parent_win = self.parentWidget()
+        if parent_win is not None:
+            parent_win.setWindowOpacity(1.0)
+        self.setWindowOpacity(1.0)
+        self.showNormal()
+        self.activateWindow()
+        self.raise_()
 
     def _on_slot_screenshot_cancelled(self) -> None:
-        self.showNormal()
-        self.activateWindow()
-        self.raise_()
+        self._restore_windows_after_shot()
 
     def _on_slot_screenshot_captured(self, qimg) -> None:
-        self.showNormal()
-        self.activateWindow()
-        self.raise_()
+        self._restore_windows_after_shot()
         from src.ui.main_window import qimage_to_pil
 
         st = self._slot_states.setdefault(self._active_slot_id, SlotImageState())
@@ -642,6 +650,12 @@ class HeraldicComposerDialog(QDialog):
         st.offset_y = 0.0
         self._refresh_slot_list()
         self._refresh_canvas()
+
+    def done(self, result: int) -> None:  # type: ignore[override]
+        parent_win = self.parentWidget()
+        if parent_win is not None and parent_win.windowOpacity() < 1.0:
+            parent_win.setWindowOpacity(1.0)
+        super().done(result)
 
     def _pick_slot_bg(self) -> None:
         st = self._slot_states.setdefault(self._active_slot_id, SlotImageState())
