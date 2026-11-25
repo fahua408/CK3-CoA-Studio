@@ -644,52 +644,52 @@ class HeraldicComposerDialog(QDialog):
                 "q2": "hist_leon",
                 "q3": "hist_aragon",
                 "q4": "hist_navarre",
-                "point": "hist_granada",
-                "center": "hist_france_bourbon",
+                "point": "hist_jerusalem",
+                "center": "hist_france_royal",
             }
         elif tpl_id == "hanover_4":
             mapping = {
                 "left": "hist_england_plantagenet",
                 "right": "hist_leon",
-                "bottom": "hist_hre_eagle",
-                "center": "hist_jerusalem",
+                "bottom": "hist_hre_emperor",
+                "center": "hist_charles_v_hre",
             }
         elif tpl_id == "savoy_9":
             mapping = {
                 "l1": "hist_castile",
-                "l2": "hist_france_bourbon",
+                "l2": "hist_france_royal",
                 "l3": "hist_england_plantagenet",
                 "r1": "hist_leon",
                 "r2": "hist_aragon",
                 "r3": "hist_navarre",
-                "top_wedge": "hist_hre_eagle",
-                "bot_wedge": "hist_granada",
-                "center": "hist_savoy",
+                "top_wedge": "hist_hre_emperor",
+                "bot_wedge": "hist_jerusalem",
+                "center": "hist_savoy_duchy",
             }
         elif tpl_id == "quartered_5":
             mapping = {
-                "q1": "hist_france_bourbon",
+                "q1": "hist_france_royal",
                 "q2": "hist_england_plantagenet",
                 "q3": "hist_castile",
                 "q4": "hist_leon",
-                "center": "hist_hre_eagle",
+                "center": "hist_hre_emperor",
             }
         elif tpl_id == "quartered_4":
             mapping = {
-                "q1": "hist_france_bourbon",
+                "q1": "hist_france_royal",
                 "q2": "hist_england_plantagenet",
                 "q3": "hist_england_plantagenet",
-                "q4": "hist_france_bourbon",
+                "q4": "hist_france_royal",
             }
         else:
             mapping = {
-                "left": "hist_byzantium_palaiologos",
-                "right": "hist_hre_eagle",
+                "left": "hist_byzantium_eagle",
+                "right": "hist_hre_emperor",
                 "center": "hist_jerusalem",
             }
 
         for slot in self._template.slots:
-            pid = mapping.get(slot.slot_id, "hist_hre_eagle")
+            pid = mapping.get(slot.slot_id, "hist_hre_emperor")
             preset = get_historical_preset(pid)
             st = self._slot_states.setdefault(slot.slot_id, SlotImageState(bg_color=slot.default_bg))
             st.pil_image = preset.generator(512)

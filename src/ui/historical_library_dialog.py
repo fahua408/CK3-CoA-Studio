@@ -38,7 +38,7 @@ class HistoricalLibraryDialog(QDialog):
         parent: Optional[QWidget] = None,
     ) -> None:
         super().__init__(parent)
-        self.setWindowTitle("🏛️ 欧洲历史名门纹章库（内置 14 款经典王室/帝国纹章）— 十字军之王3纹章生成工坊")
+        self.setWindowTitle("🏛️ 欧洲历史名门纹章库（内置 16 款维基共享历史原图）— 十字军之王3纹章生成工坊")
         self.resize(980, 660)
 
         self._workspace_dir = workspace_dir
@@ -73,7 +73,7 @@ class HistoricalLibraryDialog(QDialog):
         head.setObjectName("GoldTitle")
         ll.addWidget(head)
 
-        sub = QLabel("所有历史纹章均为软件内置矢量高清绘制（512×512），可一键导入工作区或送入多纹章拼接工坊。")
+        sub = QLabel("所有历史纹章均下载自维基共享资源（Wikimedia Commons 公有领域历史原图，512×512），可一键导入工作区或送入多纹章拼接工坊。")
         sub.setWordWrap(True)
         sub.setStyleSheet("color: #8E96A4; font-size: 11.5px;")
         ll.addWidget(sub)
@@ -92,7 +92,7 @@ class HistoricalLibraryDialog(QDialog):
         self._list.currentRowChanged.connect(self._on_row_changed)
         ll.addWidget(self._list, 1)
 
-        import_all_btn = QPushButton("📦 一键将全部 14 款欧洲历史名章导入我的工作区")
+        import_all_btn = QPushButton("📦 一键将全部 16 款欧洲历史名章原图导入我的工作区")
         import_all_btn.setStyleSheet(
             "QPushButton { background: #19322A; border: 1px solid #2D6A54; color: #A7F3D0; font-weight: 700; padding: 8px 12px; }"
             "QPushButton:hover { background: #214539; border-color: #3E8E72; }"
