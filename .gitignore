@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+
+# PyInstaller / Build / Release artifacts
+build/
+dist/
+release/
+*.spec
+*.exe
+*.zip
+!packaging/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local user settings
+config.json
