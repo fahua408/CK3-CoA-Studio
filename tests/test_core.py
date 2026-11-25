@@ -21,6 +21,7 @@ from src.core.composer import (
     render_heraldic_composite,
 )
 from src.core.converter import ConvertParams
+from src.core.historical_presets import HISTORICAL_PRESETS
 from src.core.image_ops import SquareEditSpec, apply_square_edit, save_square_image
 from src.core.txt_renderer import render_coa_txt_string
 from src.core.workspace import inspect_txt_file, rename_entry, scan_workspace
@@ -174,6 +175,12 @@ class TestCore(unittest.TestCase):
         self.assertEqual(res.total_instances, 1)
         self.assertEqual(res.image.getpixel((10, 10))[:3], (220, 180, 60))
         self.assertEqual(res.image.getpixel((100, 100))[:3], (20, 30, 40))
+
+    def test_historical_presets_generation(self) -> None:
+        self.assertGreaterEqual(len(HISTORICAL_PRESETS), 14)
+        for preset in HISTORICAL_PRESETS:
+            img = preset.generator(256)
+            self.assertEqual(img.size, (256, 256), f"{preset.preset_id} is not 256x256")
 
 
 if __name__ == "__main__":

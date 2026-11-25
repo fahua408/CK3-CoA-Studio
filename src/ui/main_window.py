@@ -59,6 +59,7 @@ from src.core.workspace import (
 )
 from src.ui.coa_card import CoaCardWidget
 from src.ui.composer_dialog import HeraldicComposerDialog
+from src.ui.historical_library_dialog import HistoricalLibraryDialog
 from src.ui.image_editor import SquareImageEditorDialog
 from src.ui.preview_widget import CoaPreviewWidget
 from src.ui.screenshot_overlay import ScreenshotOverlay
@@ -188,6 +189,15 @@ class MainWindow(QMainWindow):
         )
         compose_btn.clicked.connect(self.open_composer)
         tb_l.addWidget(compose_btn)
+
+        hist_btn = QPushButton("👑 欧洲名章库")
+        hist_btn.setToolTip("内置 14 款欧洲著名历史王朝/帝国纹章（拜占庭、神罗、英格兰金雀花、法兰西波旁、西班牙六合一、耶路撒冷等）")
+        hist_btn.setStyleSheet(
+            "QPushButton { background: #2A1D24; border: 1px solid #7C3AED; color: #E9D5FF; font-weight: 700; }"
+            "QPushButton:hover { background: #372530; border-color: #9333EA; }"
+        )
+        hist_btn.clicked.connect(self.open_historical_library)
+        tb_l.addWidget(hist_btn)
 
         import_btn = QPushButton("🖼 导入图片")
         import_btn.clicked.connect(self._import_images)
@@ -1194,6 +1204,24 @@ class MainWindow(QMainWindow):
     def open_tutorial(self) -> None:
         dlg = TutorialDialog(self._config, self)
         dlg.exec()
+
+    def open_historical_library(self) -> None:
+        dlg = HistoricalLibraryDialog(
+            workspace_dir=Path(self._config.workspace_dir),
+            default_auto_convert=self._config.editor_auto_convert,
+            parent=self,
+        )
+        if dlg.exec() == HistoricalLibraryDialog.DialogCode.Accepted and dlg.saved_paths:
+            first_saved = dlg.saved_paths[0]
+            self.reload_workspace(preserve_id=str(first_saved))
+            if len(dlg.saved_paths) == 1:
+                self._status.showMessage(f"✓ 已导入欧洲历史名章: {first_saved.name}")
+                if dlg.should_auto_convert_single:
+                    entry = self._find_entry(str(first_saved))
+                    if entry:
+                        self._run_convert_entry(entry)
+            else:
+                self._status.showMessage(f"✓ 已一键导入全部 {len(dlg.saved_paths)} 款欧洲历史名章到工作区！")
 
     def open_txt_to_image(self, _checked: bool = False, initial_code: str = "") -> None:
         entry = self._find_entry(self._selected_id)

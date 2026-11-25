@@ -49,6 +49,7 @@ from src.core.composer import (
     render_heraldic_composite,
     slot_pixel_polygon,
 )
+from src.core.historical_presets import HISTORICAL_PRESETS, get_historical_preset
 from src.core.image_ops import save_square_image
 from src.core.workspace import CoaEntry, read_txt_full
 from src.ui.screenshot_overlay import ScreenshotOverlay
@@ -314,13 +315,20 @@ class HeraldicComposerDialog(QDialog):
         left_col.addWidget(self._canvas, 1)
 
         c_footer = QHBoxLayout()
-        self._guide_chk = QCheckBox("在画布上显示槽位序号与选中绿框（导出时不会带入）")
+        self._guide_chk = QCheckBox("显示槽位序号与选中绿框")
         self._guide_chk.setChecked(True)
         self._guide_chk.toggled.connect(self._canvas.set_show_guides)
-        demo_fill_btn = QPushButton("🎲 用图库图片一键自动填满示范")
+        hist_demo_btn = QPushButton("👑 一键填入欧洲历史名章示范")
+        hist_demo_btn.setStyleSheet(
+            "QPushButton { background: #262117; border: 1px solid #8A6D24; color: #F3DA91; font-weight: 700; }"
+            "QPushButton:hover { background: #332C1D; border-color: #D9B45A; }"
+        )
+        hist_demo_btn.clicked.connect(self._auto_fill_from_historical)
+        demo_fill_btn = QPushButton("🎲 用图库图片填满")
         demo_fill_btn.clicked.connect(self._auto_fill_from_gallery)
         c_footer.addWidget(self._guide_chk)
         c_footer.addStretch()
+        c_footer.addWidget(hist_demo_btn)
         c_footer.addWidget(demo_fill_btn)
         left_col.addLayout(c_footer)
 
@@ -360,6 +368,18 @@ class HeraldicComposerDialog(QDialog):
         )
         self._slot_list.currentRowChanged.connect(self._on_slot_row_changed)
         pl.addWidget(self._slot_list)
+
+        # Quick pick from built-in European historical Coats of Arms
+        hist_row = QHBoxLayout()
+        hist_row.setSpacing(6)
+        hist_row.addWidget(QLabel("欧洲名章:"))
+        self._hist_combo = QComboBox()
+        self._hist_combo.addItem("— 👑 点击选择内置欧洲历史知名纹章填入当前槽位 —", "")
+        for p in HISTORICAL_PRESETS:
+            self._hist_combo.addItem(f"👑 {p.name}", p.preset_id)
+        self._hist_combo.currentIndexChanged.connect(self._on_historical_picked)
+        hist_row.addWidget(self._hist_combo, 1)
+        pl.addLayout(hist_row)
 
         # Quick pick from workspace gallery
         gal_row = QHBoxLayout()
@@ -516,7 +536,7 @@ class HeraldicComposerDialog(QDialog):
             if st and st.image_path:
                 status = f"✓ 已填入: {st.image_path.name}"
             elif st and st.pil_image is not None:
-                status = "✓ 已填入: 屏幕截图"
+                status = "✓ 已填入: 内置名章 / 截图"
             else:
                 status = "○ 未填图（点击选择）"
             item = QListWidgetItem(f"{slot.label}   —   {status}")
@@ -595,6 +615,88 @@ class HeraldicComposerDialog(QDialog):
         st.zoom = 1.0
         st.offset_x = 0.0
         st.offset_y = 0.0
+        self._refresh_slot_list()
+        self._refresh_canvas()
+
+    def _on_historical_picked(self) -> None:
+        preset_id = str(self._hist_combo.currentData() or "")
+        if not preset_id:
+            return
+        preset = get_historical_preset(preset_id)
+        st = self._slot_states.setdefault(self._active_slot_id, SlotImageState())
+        st.pil_image = preset.generator(512)
+        st.image_path = None
+        st.zoom = 1.0
+        st.offset_x = 0.0
+        st.offset_y = 0.0
+        self._hist_combo.blockSignals(True)
+        self._hist_combo.setCurrentIndex(0)
+        self._hist_combo.blockSignals(False)
+        self._refresh_slot_list()
+        self._refresh_canvas()
+
+    def _auto_fill_from_historical(self) -> None:
+        tpl_id = self._template.template_id
+        mapping: dict[str, str] = {}
+        if tpl_id == "spanish_6":
+            mapping = {
+                "q1": "hist_castile",
+                "q2": "hist_leon",
+                "q3": "hist_aragon",
+                "q4": "hist_navarre",
+                "point": "hist_granada",
+                "center": "hist_france_bourbon",
+            }
+        elif tpl_id == "hanover_4":
+            mapping = {
+                "left": "hist_england_plantagenet",
+                "right": "hist_leon",
+                "bottom": "hist_hre_eagle",
+                "center": "hist_jerusalem",
+            }
+        elif tpl_id == "savoy_9":
+            mapping = {
+                "l1": "hist_castile",
+                "l2": "hist_france_bourbon",
+                "l3": "hist_england_plantagenet",
+                "r1": "hist_leon",
+                "r2": "hist_aragon",
+                "r3": "hist_navarre",
+                "top_wedge": "hist_hre_eagle",
+                "bot_wedge": "hist_granada",
+                "center": "hist_savoy",
+            }
+        elif tpl_id == "quartered_5":
+            mapping = {
+                "q1": "hist_france_bourbon",
+                "q2": "hist_england_plantagenet",
+                "q3": "hist_castile",
+                "q4": "hist_leon",
+                "center": "hist_hre_eagle",
+            }
+        elif tpl_id == "quartered_4":
+            mapping = {
+                "q1": "hist_france_bourbon",
+                "q2": "hist_england_plantagenet",
+                "q3": "hist_england_plantagenet",
+                "q4": "hist_france_bourbon",
+            }
+        else:
+            mapping = {
+                "left": "hist_byzantium_palaiologos",
+                "right": "hist_hre_eagle",
+                "center": "hist_jerusalem",
+            }
+
+        for slot in self._template.slots:
+            pid = mapping.get(slot.slot_id, "hist_hre_eagle")
+            preset = get_historical_preset(pid)
+            st = self._slot_states.setdefault(slot.slot_id, SlotImageState(bg_color=slot.default_bg))
+            st.pil_image = preset.generator(512)
+            st.image_path = None
+            st.zoom = 1.0
+            st.offset_x = 0.0
+            st.offset_y = 0.0
         self._refresh_slot_list()
         self._refresh_canvas()
 
