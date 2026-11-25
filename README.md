@@ -1,12 +1,12 @@
-# 十字军之王3纹章生成工坊 (CK3 CoA Studio)
+# 十字军之王3纹章生成工坊 (CK3 CoA Studio) — 图片转纹章 & 多纹章拼接合成器
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-D9B45A.svg)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%2010%2F11-1E293B.svg)]()
 [![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg)]()
 
-一款专为 **《十字军之王 III》(Crusader Kings III / CK3)** 玩家与 Mod 创作者打造的现代桌面工作台，围绕 `coaConverter_windows.exe` 构建，打通 **「1:1 正方形截图 / 图片编辑 → 参数化生成纹章代码 → 原图与 TXT 一一对应管理 → 一键复制粘入游戏」** 完整工作流。
+一款专为 **《十字军之王3 / 王国风云3》(Crusader Kings III / CK3)** 玩家与 Mod 创作者打造的现代桌面工作台，围绕 `coaConverter_windows.exe` 构建，打通 **「1:1 正方形截图 / 图片编辑 → 多纹章四分/六合一/九区复合拼接 → 参数化生成纹章代码 → 原图与 TXT 一一对应管理 → 一键复制粘贴入游戏」** 完整工作流。
 
-> **English Summary**: A clean Windows desktop studio for Crusader Kings III (CK3) Coat of Arms conversion (`coaConverter_windows.exe`). Features strict 1:1 square screen capture, a built-in 1:1 square image editor (crop, smart border pad, rotate, color/sharpness enhancement), paired Image ↔ CoA `.txt` gallery management, and lag-free one-click clipboard copying even for 70,000+ line CoA scripts.
+> **English Summary**: **CK3 CoA Studio** is a modern Windows GUI for **Crusader Kings III (CK3) Coat of Arms conversion** (`coaConverter_windows.exe` frontend) and **Multi-CoA Heraldic Composition (Quartering / Escutcheon / Spanish 6-in-1 / Hanover 3-way / Savoy 9-in-1)**. Features strict 1:1 square screen capture, a built-in 1:1 square image editor (crop, smart border pad, rotate, color/sharpness enhancement), paired Image ↔ CoA `.txt` gallery management, and lag-free one-click clipboard copying even for 70,000+ line CoA scripts.
 
 ---
 
@@ -128,9 +128,27 @@ powershell -ExecutionPolicy Bypass -File packaging/build_release.ps1
 
 ---
 
+## 🔗 同作者开源工具推荐 (Related Projects by Author)
+
+- 👑 **[CK3-DirectLAN — 《十字军之王3 / 王国风云3》私人联机 P2P 高速直连助手](https://github.com/fahua408/CK3-DirectLAN)**
+  自建虚拟局域网 P2P 高速直连联机工具，解决 CK3 多人联机掉线、不同步（Desync）、高延迟与服务器卡顿问题，实测 4～5 速稳定同步。
+- 🖥️ **[dsh-pet-on-screen — 大肥鱼桌宠钛坦屏 / TCOMAS LG700 水冷副屏双桌宠协同投放控制台](https://github.com/fahua408/dsh-pet-on-screen)**
+  基于 DirectIO USB HID 管道的 640×480 水冷副屏桌宠（DeepSeek 蓝毛女仆 `dsh-pet` & Coopanion 大肥鱼）30FPS 零拷贝投放与硬件壁纸刷写工具。
+
+---
+
 ## 开源协议与免责致谢 (License, Credits & Disclaimer)
 
 - **开源协议**：本项目源码基于 [MIT License](LICENSE) 开源，免费提供给玩家与 Mod 创作者学习与个人非商业辅助使用。
 - **第三方转换器致谢**：纹章底层命令行转换由第三方开源工具 `coaConverter` (`coaConverter_windows.exe`, Author: **Perondas**) 提供。本仓库仅提供图形化管理、1:1 截图与图片编辑前端，**不打包、不分发** `coaConverter_windows.exe` 二进制本体，请用户自行获取并配置。
 - **游戏商标与版权声明**：《十字军之王 III》(Crusader Kings III) 及其游戏内界面、徽章框架与相关商标版权均归 **Paradox Interactive AB** 所有。本项目为玩家自制的非官方辅助工具，与 Paradox Interactive 无任何隶属、合作或官方授权关系。
 - **素材合规提示**：本工具所有图片裁切与文本转换均在用户本地电脑离线完成，请确保所转换的图片素材符合所在地法律法规与社区规范。
+
+---
+
+<details>
+<summary>🔍 搜索关键词索引 (Search Keywords & Tags for Indexing)</summary>
+
+`十字军之王3纹章` · `十字军之王3图片转纹章` · `十字军之王3自定义纹章代码` · `十字军之王3纹章生成器` · `十字军之王3纹章拼接` · `十字军之王3四分纹章` · `十字军之王3联统纹章` · `王国风云3纹章工具` · `王國風雲3圖片轉紋章` · `CK3纹章转换器` · `coaConverter_windows.exe使用教程` · `coaConverter图形界面` · `coaConverter GUI` · `CK3 Coat of Arms Generator` · `CK3 Image to Coat of Arms Converter` · `CK3 Custom Coat of Arms Paste Clipboard` · `CK3 Quartered Coat of Arms Merger` · `Crusader Kings 3 Heraldry Tool` · `Crusader Kings III Modding Tools`
+
+</details>
