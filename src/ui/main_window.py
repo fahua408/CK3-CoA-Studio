@@ -48,6 +48,7 @@ from src import APP_TITLE, __version__
 from src.core.config import AppConfig, discover_converter
 from src.core.converter import COLOR_MODES, ConvertParams, ConverterRunner
 from src.core.image_ops import save_square_image
+from src.core.txt_renderer import render_coa_txt_file
 from src.core.workspace import (
     IMAGE_EXTENSIONS,
     CoaEntry,
@@ -62,7 +63,9 @@ from src.ui.image_editor import SquareImageEditorDialog
 from src.ui.preview_widget import CoaPreviewWidget
 from src.ui.screenshot_overlay import ScreenshotOverlay
 from src.ui.settings_dialog import SettingsDialog
+from src.ui.theme import pil_to_qpixmap
 from src.ui.tutorial_dialog import TutorialDialog
+from src.ui.txt_to_image_dialog import TxtToImageDialog
 
 
 def qimage_to_pil(qimg: QImage) -> Image.Image:
@@ -424,7 +427,16 @@ class MainWindow(QMainWindow):
         tx_title.setObjectName("GoldTitle")
         tx_head.addWidget(tx_title)
         tx_head.addStretch()
-        self._open_txt_btn = QPushButton("📄 用记事本/外部打开")
+        self._txt_to_img_btn = QPushButton("🔮 TXT反推生成图片")
+        self._txt_to_img_btn.setToolTip("将当前纹章 .txt 或剪贴板中的纹章代码反向还原并保存为 1:1 图片")
+        self._txt_to_img_btn.setStyleSheet(
+            "QPushButton { background: #231D36; border: 1px solid #5B4694; color: #DDD6FE; font-weight: 700; }"
+            "QPushButton:hover { background: #2E2647; border-color: #7C62C4; }"
+        )
+        self._txt_to_img_btn.clicked.connect(self.open_txt_to_image)
+        tx_head.addWidget(self._txt_to_img_btn)
+
+        self._open_txt_btn = QPushButton("📄 外部打开")
         self._open_txt_btn.clicked.connect(self._open_txt_external)
         tx_head.addWidget(self._open_txt_btn)
         tx_l.addLayout(tx_head)
@@ -585,21 +597,34 @@ class MainWindow(QMainWindow):
             self._render_detail(None)
 
     def _get_thumbnail(self, entry: CoaEntry) -> Optional[QPixmap]:
-        if not entry.has_image or not entry.image_path:
-            return None
-        key = str(entry.image_path)
-        if key not in self._thumb_cache:
-            pm = QPixmap(key)
-            if not pm.isNull():
-                self._thumb_cache[key] = pm.scaled(
-                    182,
-                    158,
-                    Qt.AspectRatioMode.KeepAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation,
-                )
-            else:
-                self._thumb_cache[key] = QPixmap()
-        return self._thumb_cache[key]
+        if entry.has_image and entry.image_path:
+            key = str(entry.image_path)
+            if key not in self._thumb_cache:
+                pm = QPixmap(key)
+                if not pm.isNull():
+                    self._thumb_cache[key] = pm.scaled(
+                        182,
+                        158,
+                        Qt.AspectRatioMode.KeepAspectRatio,
+                        Qt.TransformationMode.SmoothTransformation,
+                    )
+                else:
+                    self._thumb_cache[key] = QPixmap()
+            return self._thumb_cache[key]
+
+        # For TXT-only valid CoA files (e.g. 明月.txt), automatically reverse-render a thumbnail!
+        if entry.has_txt and entry.txt_path and entry.txt_meta and entry.txt_meta.is_valid_coa:
+            key = f"txt_rev::{entry.txt_path}"
+            if key not in self._thumb_cache:
+                try:
+                    res = render_coa_txt_file(entry.txt_path, output_size=182, smooth_upscale=True)
+                    self._thumb_cache[key] = pil_to_qpixmap(res.image)
+                except Exception:
+                    self._thumb_cache[key] = QPixmap()
+            pm = self._thumb_cache[key]
+            return pm if not pm.isNull() else None
+
+        return None
 
     def _rebuild_cards(self) -> None:
         while self._gallery_grid.count():
@@ -707,8 +732,8 @@ class MainWindow(QMainWindow):
             self._pair_txt_lbl.setStyleSheet("font-weight: 600; color: #636B7A; background: transparent;")
 
         # Image preview & metadata
-        self._preview.set_image_path(entry.image_path if entry.has_image else None)
         if entry.has_image and entry.image_path:
+            self._preview.set_image_path(entry.image_path)
             sq_tip = "✓ 1:1 比例标准" if entry.is_square else "⚠ 非 1:1 正方形，建议先点下方「1:1 编辑 / 裁切」"
             dup_tip = (
                 f" · 同名还有 {entry.duplicate_stem_count - 1} 张其他格式图片"
@@ -719,7 +744,19 @@ class MainWindow(QMainWindow):
                 f"文件: {entry.image_path.name} · 尺寸: {entry.image_width}×{entry.image_height} px · "
                 f"体积: {entry.image_size_str} · {sq_tip}{dup_tip}"
             )
+        elif entry.has_txt and entry.txt_path and entry.txt_meta and entry.txt_meta.is_valid_coa:
+            try:
+                res = render_coa_txt_file(entry.txt_path, output_size=512, smooth_upscale=True)
+                self._preview.set_pixmap(pil_to_qpixmap(res.image))
+                self._img_meta_lbl.setText(
+                    f"🔮 已从 {entry.txt_path.name} 实时反推还原画面（原始网格 {res.native_grid_size}×{res.native_grid_size} · "
+                    f"{res.color_groups} 色） · 点击下方「🔮 TXT反推生成图片」即可保存为 PNG 原图！"
+                )
+            except Exception:
+                self._preview.set_image_path(None)
+                self._img_meta_lbl.setText("当前为纯文本条目，无关联源图片。")
         else:
+            self._preview.set_image_path(None)
             self._img_meta_lbl.setText("当前为纯文本条目，无关联源图片。")
 
         # Button enable states
@@ -1113,6 +1150,11 @@ class MainWindow(QMainWindow):
                 pil_img = qimage_to_pil(qimg)
                 stamp = time.strftime("%Y%m%d_%H%M%S")
                 self._launch_editor(source_image=pil_img, suggested_stem=f"paste_{stamp}")
+                return
+        if mime and mime.hasText():
+            text = cb.text()
+            if text and "colored_emblem" in text:
+                self.open_txt_to_image(initial_code=text)
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         if event.mimeData().hasUrls():
@@ -1152,6 +1194,24 @@ class MainWindow(QMainWindow):
     def open_tutorial(self) -> None:
         dlg = TutorialDialog(self._config, self)
         dlg.exec()
+
+    def open_txt_to_image(self, _checked: bool = False, initial_code: str = "") -> None:
+        entry = self._find_entry(self._selected_id)
+        init_path = (
+            entry.txt_path
+            if (not initial_code and entry and entry.has_txt and entry.txt_path)
+            else None
+        )
+        dlg = TxtToImageDialog(
+            workspace_dir=Path(self._config.workspace_dir),
+            initial_txt_path=init_path,
+            initial_code=initial_code,
+            parent=self,
+        )
+        if dlg.exec() == TxtToImageDialog.DialogCode.Accepted and dlg.saved_image_path:
+            saved = dlg.saved_image_path
+            self.reload_workspace(preserve_id=str(saved))
+            self._status.showMessage(f"✓ 已从纹章 TXT 反向还原并保存图片: {saved.name}")
 
     def open_composer(self) -> None:
         dlg = HeraldicComposerDialog(

@@ -22,6 +22,7 @@ from src.core.composer import (
 )
 from src.core.converter import ConvertParams
 from src.core.image_ops import SquareEditSpec, apply_square_edit, save_square_image
+from src.core.txt_renderer import render_coa_txt_string
 from src.core.workspace import inspect_txt_file, rename_entry, scan_workspace
 
 
@@ -151,6 +152,28 @@ class TestCore(unittest.TestCase):
         self.assertIn("position={ 0.250000 0.250000 }", merged)
         self.assertIn("position={ 0.750000 0.750000 }", merged)
         self.assertIn("scale={ 0.100000 0.100000 }", merged)
+
+    def test_reverse_txt_to_image_renderer(self) -> None:
+        coa_txt = (
+            'coa_rd_dynasty_100={\n'
+            '\tpattern="pattern_solid.dds"\n'
+            '\tcolor1=rgb { 20 30 40 }\n'
+            '\tcolored_emblem={\n'
+            '\t\tcolor1={ 220 180 60 }\n'
+            '\t\ttexture="ce_block_02.dds"\n'
+            '\t\tinstance={\n'
+            '\t\t\tposition={ 0.000000 0.000000 }\n'
+            '\t\t\tscale={ 0.500000 0.500000 }\n'
+            '\t\t}\n'
+            '\t}\n'
+            '}\n'
+        )
+        res = render_coa_txt_string(coa_txt, output_size=128, smooth_upscale=False)
+        self.assertEqual(res.image.size, (128, 128))
+        self.assertEqual(res.color_groups, 1)
+        self.assertEqual(res.total_instances, 1)
+        self.assertEqual(res.image.getpixel((10, 10))[:3], (220, 180, 60))
+        self.assertEqual(res.image.getpixel((100, 100))[:3], (20, 30, 40))
 
 
 if __name__ == "__main__":
